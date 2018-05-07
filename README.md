@@ -1,57 +1,49 @@
-# Project Name
+# Azure IoT Edge "Scott or Not" Sample
 
-(short, 1-3 sentenced, description of the project)
+This is a code sample for an IoT Edge solution that takes images from a camera feed on an edge device, runs them through a custom vision module, and pushes the results to an Azure Function on the device to take an action.  The model included with the sample will classify images containing Scott Guthrie.  You can easily [replace the model with any Custom Vision Service model](#changing-the-model)
 
-## Features
+## Setup
 
-This project framework provides the following features:
+### Pre-reqs
 
-* Feature 1
-* Feature 2
-* ...
+* Visual Studio Code
+    * Docker Extension
+    * Azure IoT Hub Extension
+* Docker
+* Python 2.7
+* `iotedgectl` installed on devices ([Windows](https://docs.microsoft.com/azure/iot-edge/quickstart) or [Linux/Raspberry Pi](https://docs.microsoft.com/azure/iot-edge/quickstart-linux))
+* Azure Subscription (free trial is fine)
+* Azure IoT Hub
 
-## Getting Started
+If you plan to run on a Raspberry Pi, it's recommended to use a Raspberry Pi 3 with a `picamera` enabled camera and a SenseHat running linux.
 
-### Prerequisites
+If you plan to run on a Windows PC, be sure to [read the following](#running-the-solution-on-a-windows-machine)
 
-(ideally very short, if any)
+### Configuration
 
-- OS
-- Library version
-- ...
+* Clone the repository and open it in Visual Studio Code
+* Open the **Azure IoT Hub Devices** extension and connect to an IoT Hub in Azure
+* Configure the docker registry you want to publish the container images. [Azure Container Registry](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-get-started-portal) is a great choice.  Update the `[registry]` placeholder in the three `module.json` files with the registry you have authorization to use.
 
-### Installation
+There are two templates included with the samples located in the `templates/` directory.  Depending on where you are planning to build and deploy (Windows or Linux Raspberry Pi), copy the `deployment.template.json` file to the base of the project.  This will enable you to right-click the template and **Build the IoT Edge Solution**
 
-(ideally very short)
+To build the solution, copy a `deployment.template.json` file to the base of the project, right-click the file, and select **Build the IoT Edge Solution**.  This will build the docker images and publish them to your docker registry.  It will also generate a `config/deployment.json` file you can use to deploy to an edge device.
 
-- npm install [package name]
-- mvn install
-- ...
+Right-click the `config/deployment.json` file to **Create Deployment for IoT Edge Device**.  This will allow you to select the IoT Edge device running `iotedgectl` to deploy the solution.  
 
-### Quickstart
-(Add steps to get up and running quickly)
+Be sure to note in the `deployment.template.json` file and the generated `deployment.json` file is an environment variable for the AzureFunctionContainer that contains the URL for the Logic App to call to post a tweet.  This should be replaced with the URL of your own Logic App that has an HTTP Request trigger.
 
-1. git clone [repository clone url]
-2. cd [respository name]
-3. ...
+## Running the solution on a Windows machine
 
+Currently Docker for Windows doesn't allow sharing devices from the host operating system with containers, even when using the `--privileged` flag.  The issue [is being tracked here](https://github.com/docker/for-win/issues/1018) and should be resolved in an upcoming release.  In the meantime the Windows deployment template includes an environment variable that will pull the image from `C:\Image\picture.jpg` instead of the webcam.  If you want to automatically generate `picture.jpg` files in real-time from the webcam you can use [this simple console application](https://github.com/jeffhollan/csharp-camera-capture-to-image/releases/tag/0.1) which will take the camera feed and save `picture.jpg` files.  Extract all of the files in a directory and then run the `.exe` file.
 
-## Demo
+Also be sure to share the C drive with Docker using the Docker for Windows settings.
 
-A demo app is included to show how to use the project.
+## Personalizing the sample
 
-To run the demo, follow these steps:
+### Changing the model
 
-(Add steps to start up the demo)
+You can replace the model in this sample with a different TensorFlow model.  The [Azure Custom Vision](https://customvision.ai/) allows you to easily create and train models using sample images.  After training an image set, select **Export** and choose **Android / TensorFlow**.  Rename `labels.txt` to `model.pbtxt` and replace the `model.pb` and `model.pbtxt` files in the CustomVisionContainer with the generated entities.  You'll also likely want to change the code in the `run.csx` file for the AzureFunctionContainer to not be looking for the tags `Scott` and `NotScott`.  
 
-1.
-2.
-3.
+Rebuild and deploy your solution (⚠ don't forget to increment the version in the `module.json` file) to have solution leverage your own custom model.
 
-## Resources
-
-(Any additional resources or related projects)
-
-- Link to supporting information
-- Link to similar sample
-- ...

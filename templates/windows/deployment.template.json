@@ -1,0 +1,75 @@
+{
+  "moduleContent": {
+    "$edgeAgent": {
+      "properties.desired": {
+        "schemaVersion": "1.0",
+        "runtime": {
+          "type": "docker",
+          "settings": {
+            "minDockerVersion": "v1.25",
+            "loggingOptions": ""
+          }
+        },
+        "systemModules": {
+          "edgeAgent": {
+            "type": "docker",
+            "settings": {
+              "image": "microsoft/azureiotedge-agent:1.0-preview",
+              "createOptions": ""
+            }
+          },
+          "edgeHub": {
+            "type": "docker",
+            "status": "running",
+            "restartPolicy": "always",
+            "settings": {
+              "image": "microsoft/azureiotedge-hub:1.0-preview",
+              "createOptions": ""
+            }
+          }
+        },
+        "modules": {
+          "StartupContainer": {
+            "version": "1.0",
+            "type": "docker",
+            "status": "running",
+            "restartPolicy": "always",
+            "settings": {
+              "image": "${MODULES.StartupContainer.amd64}",
+              "createOptions": "{\"Env\": [\"DEVICE=Windows\", \"AZURE_ML_HOSTNAME=CustomVisionContainer\"],\"HostConfig\": { \"Binds\": [\"/host_mnt/c/Image:/home/pi/image\" ], \"PortBindings\":{\"8082/tcp\":[{\"HostPort\":\"8082\"}]}  }}"
+            }
+          },
+          "CustomVisionContainer": {
+            "version": "1.0",
+            "type": "docker",
+            "status": "running",
+            "restartPolicy": "always",
+            "settings": {
+              "image": "${MODULES.CustomVisionContainer.amd64}",
+              "createOptions": "{\"Env\": [\"DEVICE=Windows\", \"AZURE_FUNCTION_HOSTNAME=AzureFunctionContainer\"],\"HostConfig\":{\"PortBindings\":{\"8080/tcp\":[{\"HostPort\":\"8080\"}]}}}"
+            }
+          },
+          "AzureFunctionContainer": {
+            "version": "1.0",
+            "type": "docker",
+            "status": "running",
+            "restartPolicy": "always",
+            "settings": {
+              "image": "${MODULES.AzureFunctionContainer.amd64}",
+              "createOptions": "{\"Env\": [\"LOGIC_APP_URL=https://myLogicAppUrlGoesHere\"], \"HostConfig\":{\"PortBindings\":{\"80/tcp\":[{\"HostPort\":\"8084\"}]}}}"
+            }
+          }
+        }
+      }
+    },
+    "$edgeHub": {
+      "properties.desired": {
+        "schemaVersion": "1.0",
+        "routes": {},
+        "storeAndForwardConfiguration": {
+          "timeToLiveSecs": 7200
+        }
+      }
+    }
+  }
+}
